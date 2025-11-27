@@ -1,185 +1,125 @@
-# SAI Dashboard - Sports Authority of India
+# Sports Aadhaar Dashboard
 
-A comprehensive dashboard for managing and evaluating athlete performance data, built for the Sports Authority of India (SAI) mobile platform project.
+A monitoring and analytics platform for Sports Authority of India (SAI) to track athlete performance and academy activities.
 
-## Features
+## Overview
 
-### 🔐 Authentication
-- Secure login system
-- Session management
-- Role-based access control
+Sports Aadhaar enables SAI officials to:
+- Monitor registered athletes and their profiles
+- View AI-processed test submission statistics
+- Track academy reviews and approvals
+- Analyze sports talent assessment data
 
-### 📊 Analytics Dashboard
-- Real-time performance metrics
-- Interactive charts and visualizations
-- Test distribution analysis
-- Recent activity tracking
+**Note:** This dashboard is for monitoring only. SAI does not approve/reject athletes - that's handled by individual academies.
 
-### 👥 Athlete Browser
-- Search and filter athletes
-- View athlete profiles
-- Track test completion status
-- Location-based filtering
+## Key Features
 
-### 🎥 Video Review
-- Review athlete video submissions
-- AI verification status display
-- Approve/reject submissions
-- Detailed metrics and anomaly detection
-- Video player integration
-
-### 🌍 Internationalization
-- Location-based language detection
-- Support for 12+ Indian languages:
-  - English, Hindi, Tamil, Telugu, Kannada
-  - Marathi, Gujarati, Bengali, Odia
-  - Malayalam, Punjabi, Assamese
-- Manual language switching
-- Persistent language preferences
+- **Athlete Management** - Browse and view athlete profiles, test submissions
+- **Academy Monitoring** - Track which academies are reviewing athletes
+- **Analytics Dashboard** - View statistics on athletes, academies, and test submissions
+- **Google OAuth** - Secure authentication for SAI officials
+- **MongoDB Integration** - Real-time data from shared database
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Charts**: Recharts
-- **Video Player**: React Player
-- **State Management**: Zustand
-- **Forms**: React Hook Form + Zod
-- **Icons**: Lucide React
+- **Framework:** Next.js 14 (App Router)
+- **Database:** MongoDB Atlas with Mongoose
+- **Authentication:** NextAuth.js with Google OAuth
+- **Styling:** Tailwind CSS
+- **Language:** TypeScript
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm or yarn
+- Node.js 18+
+- MongoDB Atlas account
+- Google OAuth credentials
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the repository
 ```bash
-git clone <repository-url>
-cd SAI_dashboard
+git clone https://github.com/Antadrishti/SAI_Dashboard.git
+cd SAI_Dashboard
 ```
 
-2. Install dependencies:
+2. Install dependencies
 ```bash
 npm install
 ```
 
-3. Run the development server:
+3. Configure environment variables
+
+Create a `.env` file:
+```env
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+MONGODB_URI=your_mongodb_connection_string
+```
+
+4. Seed the database (optional)
+```bash
+npx ts-node scripts/seed.ts
+```
+
+5. Run development server
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Login
-
-For demo purposes, you can use any email and password to login. The authentication system is set up to work with mock data.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Project Structure
 
 ```
-SAI_dashboard/
-├── app/
-│   ├── dashboard/
-│   │   ├── analytics/      # Analytics page
-│   │   ├── athletes/       # Athlete browser page
-│   │   ├── videos/         # Video review page
-│   │   └── page.tsx        # Main dashboard
-│   ├── login/              # Login page
-│   ├── layout.tsx          # Root layout
-│   └── globals.css         # Global styles
-├── components/
-│   ├── providers/          # Context providers
-│   ├── DashboardLayout.tsx # Main layout component
-│   └── LanguageSwitcher.tsx
-├── lib/
-│   ├── api.ts              # API client and types
-│   └── i18n.ts             # Internationalization
-└── middleware.ts           # Route protection
+/app                    # Next.js app directory
+  /api                 # API routes (MongoDB operations)
+  /dashboard           # Protected dashboard pages
+  /login               # Authentication page
+/components            # React components
+  /academy            # Academy-related components
+  /dashboard          # Dashboard components
+/lib                   # Utilities and configurations
+  /models             # Mongoose schemas (Athlete, Academy, Video)
+  /mockData           # Mock academy data for testing
 ```
 
-## API Integration
+## Data Flow
 
-The dashboard is configured to work with a backend API. Update the `API_BASE_URL` in `lib/api.ts` to point to your backend server.
-
-Currently, the app uses mock data for development. Replace the mock implementations in `lib/api.ts` with actual API calls when connecting to your backend.
-
-## Environment Variables
-
-Create a `.env.local` file in the root directory:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
-NEXTAUTH_SECRET=your-secret-key
-NEXTAUTH_URL=http://localhost:3000
+```
+Mobile App → AI Model → Test Statistics → MongoDB → SAI Dashboard
+                                              ↓
+                                         Academies Review
 ```
 
-## Features in Detail
+## Important Notes
 
-### Language Switching
-- Automatically detects language based on user location/timezone
-- Manual language selection via dropdown
-- Preferences saved in localStorage
-- All UI text is translatable
+- **No video storage:** Videos are processed by AI; only statistics are stored
+- **Academy data:** Currently using mock data until database merge with Flutter app
+- **SAI role:** Monitoring only - no approval/rejection workflow
 
-### Responsive Design
-- Mobile-first approach
-- Responsive sidebar navigation
-- Optimized for tablets and desktops
-- Touch-friendly interface
+## Database Collections
 
-### Security
-- Protected routes with middleware
-- Secure session management
-- API authentication headers
-- Input validation
+- `athletes` - Athlete profiles and basic info
+- `videos` - AI-processed test statistics (not actual videos)
+- `academies` - Academy information (mock data for now)
+- `athletereviews` - Academy review records
+- `activities` - System activity logs
 
-## Deployment
+## Future Integration
 
-### Build for Production
-
-```bash
-npm run build
-npm start
-```
-
-### Deploy to Vercel
-
-1. Push your code to GitHub
-2. Import project in Vercel
-3. Configure environment variables
-4. Deploy
-
-## Future Enhancements
-
-- [ ] Real-time notifications
-- [ ] Advanced filtering and sorting
-- [ ] Export functionality (PDF, CSV)
-- [ ] Bulk operations
-- [ ] Advanced analytics
-- [ ] User management
-- [ ] Audit logs
-- [ ] Dark mode
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+This dashboard will be integrated with:
+- Flutter mobile app for athletes
+- Shared MongoDB database with academy portal
+- Real academy data (currently using mock data)
 
 ## License
 
-This project is developed for the Sports Authority of India.
+Proprietary - Sports Authority of India
 
 ## Support
 
-For issues and questions, please contact the development team.
-
-
-
-
+For issues or questions, contact the SAI development team.
