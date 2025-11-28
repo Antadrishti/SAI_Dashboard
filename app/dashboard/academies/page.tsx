@@ -48,7 +48,7 @@ export default function AcademiesPage() {
                             type="text"
                             placeholder="Search academies by name or location..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => setSearchQuery(e.currentTarget.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF8C42] focus:border-transparent"
                         />
                     </div>
