@@ -48,7 +48,7 @@ export default function AcademiesPage() {
                             type="text"
                             placeholder="Search academies by name or location..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF8C42] focus:border-transparent"
                         />
                     </div>
@@ -56,7 +56,7 @@ export default function AcademiesPage() {
                     {/* State/Region Filter */}
                     <select
                         value={stateFilter}
-                        onChange={(e) => setStateFilter(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStateFilter(e.target.value)}
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF8C42] focus:border-transparent"
                     >
                         {uniqueStates.map((state) => (
@@ -69,7 +69,7 @@ export default function AcademiesPage() {
                     {/* Status Filter */}
                     <select
                         value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF8C42] focus:border-transparent"
                     >
                         <option value="all">All Status</option>
