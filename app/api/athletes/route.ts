@@ -61,17 +61,17 @@ export async function POST(request: NextRequest) {
         await connectDB()
 
         const body = await request.json() as any
-        const athlete = await Athlete.create(body)
+        const athlete = await Athlete.create(body) as any
 
         return NextResponse.json({
-            id: athlete._id.toString(),
+            id: athlete._id?.toString() || '',
             name: athlete.name,
             email: athlete.email,
             age: athlete.age,
             gender: athlete.gender,
             location: athlete.location,
             state: athlete.state,
-            testsCompleted: athlete.testsCompleted,
+            testsCompleted: athlete.testsCompleted || 0,
         }, { status: 201 })
     } catch (error) {
         console.error('Athletes POST error:', error)
