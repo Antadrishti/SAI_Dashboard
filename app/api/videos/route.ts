@@ -34,8 +34,6 @@ export async function GET(request: NextRequest) {
                 athleteId: video.athleteId,
                 athleteName: '', // Will be populated from athlete data if needed
                 testType: video.testType,
-                videoUrl: video.videoUrl,
-                thumbnailUrl: video.thumbnailUrl,
                 submittedAt: video.submittedAt,
                 status: video.status,
                 aiVerification: video.aiVerification,
@@ -54,17 +52,15 @@ export async function POST(request: NextRequest) {
     try {
         await connectDB()
 
-        const body = await request.json()
-        const video = await Video.create(body)
-        const videoObj = video.toObject()
+        const body = await request.json() as any
+        const video = await Video.create(body) as any
 
         return NextResponse.json({
-            id: videoObj._id.toString(),
-            athleteId: videoObj.athleteId,
-            testType: videoObj.testType,
-            videoUrl: videoObj.videoUrl,
-            status: videoObj.status,
-            aiVerification: videoObj.aiVerification,
+            id: video._id?.toString() || '',
+            athleteId: video.athleteId,
+            testType: video.testType,
+            status: video.status,
+            aiVerification: video.aiVerification,
         }, { status: 201 })
     } catch (error) {
         console.error('Videos POST error:', error)
