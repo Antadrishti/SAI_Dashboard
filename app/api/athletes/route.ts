@@ -16,11 +16,6 @@ export async function GET(request: NextRequest) {
         // Build query
         let query: any = {}
 
-        // Apply status filter
-        if (filter && filter !== 'all') {
-            query.status = filter
-        }
-
         // Apply search filter
         if (search) {
             query.$or = [
@@ -50,7 +45,6 @@ export async function GET(request: NextRequest) {
                 location: athlete.location,
                 state: athlete.state,
                 testsCompleted: athlete.testsCompleted,
-                status: athlete.status,
                 profileImage: athlete.profileImage,
             })),
             total,
@@ -66,7 +60,7 @@ export async function POST(request: NextRequest) {
     try {
         await connectDB()
 
-        const body = await request.json()
+        const body = await request.json() as any
         const athlete = await Athlete.create(body)
         const athleteObj = athlete.toObject()
 
@@ -79,7 +73,6 @@ export async function POST(request: NextRequest) {
             location: athleteObj.location,
             state: athleteObj.state,
             testsCompleted: athleteObj.testsCompleted,
-            status: athleteObj.status,
         }, { status: 201 })
     } catch (error) {
         console.error('Athletes POST error:', error)
