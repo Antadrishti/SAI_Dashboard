@@ -1,5 +1,7 @@
 # Sports Aadhaar Dashboard
 
+**🚀 Live Dashboard:** [https://sai-dashboard-6xfl.vercel.app](https://sai-dashboard-6xfl.vercel.app)
+
 A monitoring and analytics platform for Sports Authority of India (SAI) to track athlete performance and academy activities.
 
 ## Overview
