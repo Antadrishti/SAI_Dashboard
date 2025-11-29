@@ -17,13 +17,6 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
-const navigation = [
-  { name: 'nav.dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'nav.analytics', href: '/dashboard/analytics', icon: BarChart3 },
-  { name: 'nav.athletes', href: '/dashboard/athletes', icon: Users },
-  { name: 'Academies', href: '/dashboard/academies', icon: Building2 },
-]
-
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -40,7 +33,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-gray-500">{t('common.loading')}</div>
       </div>
     )
   }
@@ -52,6 +45,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const handleLogout = () => {
     signOut({ callbackUrl: '/login' })
   }
+
+  const navigation = [
+    { name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
+    { name: t('nav.analytics'), href: '/dashboard/analytics', icon: BarChart3 },
+    { name: t('nav.athletes'), href: '/dashboard/athletes', icon: Users },
+    { name: t('Academies'), href: '/dashboard/academies', icon: Building2 },
+  ]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -108,7 +108,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     }`}
                 >
                   <Icon className="w-5 h-5" />
-                  <span>{t(item.name)}</span>
+                  <span>{item.name}</span>
                 </Link>
               )
             })}
@@ -153,4 +153,3 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     </div>
   )
 }
-

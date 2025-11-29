@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 interface AnimatedNumberProps {
     value: number
@@ -8,6 +9,7 @@ interface AnimatedNumberProps {
 }
 
 export function AnimatedNumber({ value, duration = 1000 }: AnimatedNumberProps) {
+    const { formatNumber } = useLanguage()
     const [displayValue, setDisplayValue] = useState(0)
 
     useEffect(() => {
@@ -29,5 +31,5 @@ export function AnimatedNumber({ value, duration = 1000 }: AnimatedNumberProps) 
         requestAnimationFrame(animate)
     }, [value, duration])
 
-    return <span>{displayValue.toLocaleString()}</span>
+    return <span>{formatNumber(displayValue)}</span>
 }

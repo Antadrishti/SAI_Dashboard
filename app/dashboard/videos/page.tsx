@@ -2,61 +2,60 @@
 
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { useLanguage } from '@/components/providers/LanguageProvider'
-import { useEffect, useState } from 'react'
-import { apiClient, VideoSubmission } from '@/lib/api'
+import { useState } from 'react'
+import { VideoSubmission, apiEndpoints, fetcher, mutateRequest } from '@/lib/api'
 import { CheckCircle, XCircle, Clock, Eye, Check, X } from 'lucide-react'
 import ReactPlayer from 'react-player'
+import useSWR, { useSWRConfig } from 'swr'
 
 export default function VideosPage() {
   const { t } = useLanguage()
-  const [videos, setVideos] = useState<VideoSubmission[]>([])
-  const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [selectedVideo, setSelectedVideo] = useState<VideoSubmission | null>(null)
   const [updateMessage, setUpdateMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const { mutate } = useSWRConfig()
 
-  useEffect(() => {
-    loadVideos()
-  }, [statusFilter])
-
-  const loadVideos = async () => {
-    setLoading(true)
-    try {
-      const result = await apiClient.getVideos({
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        limit: 50,
-      })
-      setVideos(result.videos)
-    } catch (error) {
-      console.error('Failed to load videos:', error)
-    } finally {
-      setLoading(false)
+  // Use SWR for data fetching
+  const { data, error, isLoading } = useSWR<{ videos: VideoSubmission[]; total: number }>(
+    apiEndpoints.videos({
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      limit: 50,
+    }),
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
     }
-  }
+  )
+
+  const videos = data?.videos || []
+  const loading = isLoading
 
   const handleStatusUpdate = async (id: string, status: 'approved' | 'rejected') => {
     try {
-      // Update the video status
-      await apiClient.updateVideoStatus(id, status)
-      
-      // Update the video in the list
-      setVideos((prevVideos) =>
-        prevVideos.map((video) =>
-          video.id === id ? { ...video, status } : video
-        )
-      )
-      
+      // Update the video status using mutateRequest
+      await mutateRequest<VideoSubmission>(apiEndpoints.updateVideoStatus(id), {
+        method: 'PATCH',
+        body: { status },
+      })
+
+      // Revalidate the videos list
+      mutate(apiEndpoints.videos({
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        limit: 50,
+      }))
+
       // Update selected video if it's the one being updated
       if (selectedVideo?.id === id) {
         setSelectedVideo({ ...selectedVideo, status })
       }
-      
+
       // Show success message
       setUpdateMessage({
         type: 'success',
         text: `Video ${status === 'approved' ? 'approved' : 'rejected'} successfully!`,
       })
-      
+
       // Clear message after 3 seconds
       setTimeout(() => setUpdateMessage(null), 3000)
     } catch (error) {
@@ -149,6 +148,8 @@ export default function VideosPage() {
           <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             {loading ? (
               <div className="p-12 text-center text-gray-500">{t('common.loading')}</div>
+            ) : error ? (
+              <div className="p-12 text-center text-red-500">Failed to load videos. Please try again.</div>
             ) : videos.length === 0 ? (
               <div className="p-12 text-center text-gray-500">No videos found</div>
             ) : (
@@ -336,4 +337,3 @@ export default function VideosPage() {
     </DashboardLayout>
   )
 }
-

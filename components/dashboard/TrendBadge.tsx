@@ -1,5 +1,8 @@
+'use client'
+
 import React from 'react'
 import { ArrowUp, ArrowDown } from 'lucide-react'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 interface TrendBadgeProps {
     value: string
@@ -7,6 +10,19 @@ interface TrendBadgeProps {
 }
 
 export function TrendBadge({ value, positive = true }: TrendBadgeProps) {
+    const { formatNumber } = useLanguage()
+    
+    // Format the trend value (handles "+12%", "+2", etc.)
+    const formatTrend = (val: string): string => {
+        // Extract sign, number, and suffix
+        const match = val.match(/^([+-]?)(\d+(?:\.\d+)?)(.*)$/)
+        if (match) {
+            const [, sign, num, suffix] = match
+            return `${sign}${formatNumber(parseFloat(num))}${suffix}`
+        }
+        return val
+    }
+
     return (
         <div
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-semibold ${positive
@@ -19,7 +35,7 @@ export function TrendBadge({ value, positive = true }: TrendBadgeProps) {
             ) : (
                 <ArrowDown className="w-3.5 h-3.5" />
             )}
-            <span>{value}</span>
+            <span>{formatTrend(value)}</span>
         </div>
     )
 }

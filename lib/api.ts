@@ -1,25 +1,86 @@
-import axios from 'axios'
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
+// SWR Fetcher function
+export async function fetcher<T>(url: string): Promise<T> {
+  const headers: HeadersInit = {
     'Content-Type': 'application/json',
-  },
-})
+  }
 
-// Add auth token interceptor
-api.interceptors.request.use((config) => {
+  // Add auth token if available
   if (typeof window !== 'undefined') {
     const user = localStorage.getItem('user')
     if (user) {
-      const userData = JSON.parse(user)
-      config.headers.Authorization = `Bearer ${userData.token || ''}`
+      try {
+        const userData = JSON.parse(user)
+        if (userData.token) {
+          headers.Authorization = `Bearer ${userData.token}`
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
     }
   }
-  return config
-})
+
+  const response = await fetch(`${API_BASE_URL}${url}`, {
+    headers,
+  })
+
+  if (!response.ok) {
+    const error = new Error('An error occurred while fetching the data.')
+    // @ts-ignore
+    error.info = await response.json().catch(() => ({}))
+    // @ts-ignore
+    error.status = response.status
+    throw error
+  }
+
+  return response.json()
+}
+
+// Mutate function for POST/PUT/DELETE requests
+export async function mutateRequest<T>(
+  url: string,
+  options: {
+    method?: 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+    body?: any
+  } = {}
+): Promise<T> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  }
+
+  // Add auth token if available
+  if (typeof window !== 'undefined') {
+    const user = localStorage.getItem('user')
+    if (user) {
+      try {
+        const userData = JSON.parse(user)
+        if (userData.token) {
+          headers.Authorization = `Bearer ${userData.token}`
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
+    }
+  }
+
+  const response = await fetch(`${API_BASE_URL}${url}`, {
+    method: options.method || 'POST',
+    headers,
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  })
+
+  if (!response.ok) {
+    const error = new Error('An error occurred while making the request.')
+    // @ts-ignore
+    error.info = await response.json().catch(() => ({}))
+    // @ts-ignore
+    error.status = response.status
+    throw error
+  }
+
+  return response.json()
+}
 
 export interface Athlete {
   id: string
@@ -73,11 +134,36 @@ export interface AnalyticsData {
   }[]
 }
 
+// API endpoint helpers
+export const apiEndpoints = {
+  analytics: '/analytics',
+  athletes: (params?: { search?: string; filter?: string; page?: number; limit?: number }) => {
+    const queryParams = new URLSearchParams()
+    if (params?.search) queryParams.append('search', params.search)
+    if (params?.filter) queryParams.append('filter', params.filter)
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    return `/athletes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+  },
+  athlete: (id: string) => `/athletes/${id}`,
+  videos: (params?: { status?: string; athleteId?: string; page?: number; limit?: number }) => {
+    const queryParams = new URLSearchParams()
+    if (params?.status) queryParams.append('status', params.status)
+    if (params?.athleteId) queryParams.append('athleteId', params.athleteId)
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    return `/videos${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+  },
+  video: (id: string) => `/videos/${id}`,
+  updateVideoStatus: (id: string) => `/videos/${id}/status`,
+}
+
+// Legacy apiClient for backward compatibility (now uses SWR internally)
+// This is kept for any code that might still use it, but components should use SWR hooks directly
 export const apiClient = {
   // Analytics
   getAnalytics: async (): Promise<AnalyticsData> => {
-    const response = await api.get('/analytics')
-    return response.data
+    return fetcher<AnalyticsData>(apiEndpoints.analytics)
   },
 
   // Athletes
@@ -87,14 +173,7 @@ export const apiClient = {
     page?: number
     limit?: number
   }): Promise<{ athletes: Athlete[]; total: number }> => {
-    const queryParams = new URLSearchParams()
-    if (params?.search) queryParams.append('search', params.search)
-    if (params?.filter) queryParams.append('filter', params.filter)
-    if (params?.page) queryParams.append('page', params.page.toString())
-    if (params?.limit) queryParams.append('limit', params.limit.toString())
-
-    const response = await api.get(`/athletes?${queryParams.toString()}`)
-    return response.data
+    return fetcher<{ athletes: Athlete[]; total: number }>(apiEndpoints.athletes(params))
   },
 
   getAthlete: async (id: string): Promise<Athlete> => {
@@ -118,42 +197,7 @@ export const apiClient = {
     page?: number
     limit?: number
   }): Promise<{ videos: VideoSubmission[]; total: number }> => {
-    // Mock data
-    const mockVideos: VideoSubmission[] = Array.from({ length: 100 }, (_, i) => ({
-      id: `video-${i + 1}`,
-      athleteId: `athlete-${Math.floor(i / 5) + 1}`,
-      athleteName: `Athlete ${Math.floor(i / 5) + 1}`,
-      testType: ['Vertical Jump', 'Sit-ups', 'Push-ups', '100m Run', 'Flexibility'][i % 5],
-      videoUrl: `https://example.com/video-${i + 1}.mp4`,
-      submittedAt: new Date(Date.now() - i * 3600000).toISOString(),
-      status: ['pending', 'approved', 'rejected'][Math.floor(Math.random() * 3)] as any,
-      aiVerification: {
-        verified: Math.random() > 0.3,
-        confidence: Math.random() * 0.3 + 0.7,
-        anomalies: Math.random() > 0.8 ? ['Possible movement anomaly detected'] : [],
-        metrics: {
-          jumpHeight: Math.random() * 50 + 30,
-          reps: Math.floor(Math.random() * 30) + 10,
-          time: Math.random() * 20 + 10,
-        },
-      },
-    }))
-
-    let filtered = mockVideos
-    if (params?.status) {
-      filtered = filtered.filter((v) => v.status === params.status)
-    }
-    if (params?.athleteId) {
-      filtered = filtered.filter((v) => v.athleteId === params.athleteId)
-    }
-
-    return {
-      videos: filtered.slice(
-        ((params?.page || 1) - 1) * (params?.limit || 20),
-        (params?.page || 1) * (params?.limit || 20)
-      ),
-      total: filtered.length,
-    }
+    return fetcher<{ videos: VideoSubmission[]; total: number }>(apiEndpoints.videos(params))
   },
 
   getVideo: async (id: string): Promise<VideoSubmission> => {
@@ -182,27 +226,9 @@ export const apiClient = {
     status: 'approved' | 'rejected',
     notes?: string
   ): Promise<VideoSubmission> => {
-    // In production, this would make an API call
-    // For demo, return updated video object
-    const updatedVideo: VideoSubmission = {
-      id,
-      athleteId: 'athlete-1',
-      athleteName: 'Sample Athlete',
-      testType: 'Vertical Jump',
-      videoUrl: 'https://example.com/video.mp4',
-      submittedAt: new Date().toISOString(),
-      status,
-      aiVerification: {
-        verified: true,
-        confidence: 0.95,
-        anomalies: [],
-        metrics: {
-          jumpHeight: 45.2,
-        },
-      },
-      reviewerNotes: notes,
-    }
-    return updatedVideo
+    return mutateRequest<VideoSubmission>(apiEndpoints.updateVideoStatus(id), {
+      method: 'PATCH',
+      body: { status, notes },
+    })
   },
 }
-

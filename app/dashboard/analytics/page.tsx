@@ -2,8 +2,7 @@
 
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { useLanguage } from '@/components/providers/LanguageProvider'
-import { useEffect, useState } from 'react'
-import { apiClient, AnalyticsData } from '@/lib/api'
+import { AnalyticsData, apiEndpoints, fetcher } from '@/lib/api'
 import {
   LineChart,
   Line,
@@ -16,29 +15,22 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import useSWR from 'swr'
 
 export default function AnalyticsPage() {
-  const { t } = useLanguage()
-  const [data, setData] = useState<AnalyticsData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { t, formatNumber, formatDate, getLocale } = useLanguage()
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
-    setLoading(true)
-    try {
-      const analytics = await apiClient.getAnalytics()
-      setData(analytics)
-    } catch (error) {
-      console.error('Failed to load analytics:', error)
-    } finally {
-      setLoading(false)
+  // Use SWR for data fetching
+  const { data, error, isLoading } = useSWR<AnalyticsData>(
+    apiEndpoints.analytics,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
     }
-  }
+  )
 
-  if (loading || !data) {
+  if (isLoading || !data) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -48,12 +40,24 @@ export default function AnalyticsPage() {
     )
   }
 
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-red-500">{t('error.loadFailed')}</div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  const verificationRate = ((data.verifiedTests / data.totalVideos) * 100).toFixed(1)
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('analytics.title')}</h1>
-          <p className="text-gray-600 mt-1">Comprehensive performance analytics</p>
+          <p className="text-gray-600 mt-1">{t('analytics.subtitle')}</p>
         </div>
 
         {/* Performance Chart */}
@@ -66,11 +70,12 @@ export default function AnalyticsPage() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
-                tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                tickFormatter={(value) => formatDate(value, { month: 'short', day: 'numeric' })}
               />
-              <YAxis />
+              <YAxis tickFormatter={(value) => formatNumber(value)} />
               <Tooltip
-                labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                labelFormatter={(value) => formatDate(value, { year: 'numeric', month: 'long', day: 'numeric' })}
+                formatter={(value: number) => [formatNumber(value), '']}
               />
               <Legend />
               <Line
@@ -78,14 +83,14 @@ export default function AnalyticsPage() {
                 dataKey="tests"
                 stroke="#0ea5e9"
                 strokeWidth={2}
-                name="Total Tests"
+                name={t('analytics.totalTests')}
               />
               <Line
                 type="monotone"
                 dataKey="verified"
                 stroke="#10b981"
                 strokeWidth={2}
-                name="Verified"
+                name={t('analytics.verified')}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -100,10 +105,10 @@ export default function AnalyticsPage() {
             <BarChart data={data.testDistribution}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="testType" />
-              <YAxis />
-              <Tooltip />
+              <YAxis tickFormatter={(value) => formatNumber(value)} />
+              <Tooltip formatter={(value: number) => [formatNumber(value), '']} />
               <Legend />
-              <Bar dataKey="count" fill="#0ea5e9" name="Number of Tests" />
+              <Bar dataKey="count" fill="#0ea5e9" name={t('analytics.numberOfTests')} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -114,20 +119,20 @@ export default function AnalyticsPage() {
             <h3 className="text-sm font-medium text-gray-600 mb-2">
               {t('analytics.totalAthletes')}
             </h3>
-            <p className="text-3xl font-bold text-gray-900">{data.totalAthletes.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-gray-900">{formatNumber(data.totalAthletes)}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-sm font-medium text-gray-600 mb-2">
               {t('analytics.totalVideos')}
             </h3>
-            <p className="text-3xl font-bold text-gray-900">{data.totalVideos.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-gray-900">{formatNumber(data.totalVideos)}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-sm font-medium text-gray-600 mb-2">
-              Verification Rate
+              {t('analytics.verificationRate')}
             </h3>
             <p className="text-3xl font-bold text-gray-900">
-              {((data.verifiedTests / data.totalVideos) * 100).toFixed(1)}%
+              {formatNumber(parseFloat(verificationRate))}%
             </p>
           </div>
         </div>
@@ -135,7 +140,3 @@ export default function AnalyticsPage() {
     </DashboardLayout>
   )
 }
-
-
-
-

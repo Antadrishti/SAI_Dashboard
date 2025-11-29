@@ -1,9 +1,14 @@
+'use client'
+
 import React from 'react'
 import { Building2, Users, CheckCircle, Activity } from 'lucide-react'
 import { StatCard } from '../dashboard/StatCard'
 import { mockAcademies } from '@/lib/mockData/academies'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 export function AcademyStats() {
+    const { t } = useLanguage()
+    
     // Calculate stats from mock data
     const totalAcademies = mockAcademies.length
     const activeAcademies = mockAcademies.filter((a) => a.status === 'active').length
@@ -14,7 +19,7 @@ export function AcademyStats() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
-                title="Total Academies"
+                title={t('dashboard.totalAcademies')}
                 value={totalAcademies}
                 trend="+2"
                 trendPositive={true}
@@ -22,7 +27,7 @@ export function AcademyStats() {
                 iconColor="orange"
             />
             <StatCard
-                title="Active Academies"
+                title={t('academies.activeAcademies')}
                 value={activeAcademies}
                 trend="+1"
                 trendPositive={true}
@@ -30,7 +35,7 @@ export function AcademyStats() {
                 iconColor="green"
             />
             <StatCard
-                title="Total Reviews"
+                title={t('academies.totalReviews')}
                 value={totalReviews}
                 trend="+12%"
                 trendPositive={true}
@@ -38,7 +43,7 @@ export function AcademyStats() {
                 iconColor="purple"
             />
             <StatCard
-                title="Approval Rate"
+                title={t('academies.approvalRate')}
                 value={approvalRate}
                 trend="+5%"
                 trendPositive={true}
