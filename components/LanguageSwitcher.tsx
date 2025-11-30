@@ -6,7 +6,7 @@ import { Globe } from 'lucide-react'
 import { useState } from 'react'
 
 export function LanguageSwitcher() {
-  const { language, setLanguage, t } = useLanguage()
+  const { language, setLanguage } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -51,7 +51,3 @@ export function LanguageSwitcher() {
     </div>
   )
 }
-
-
-
-

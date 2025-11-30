@@ -1,7 +1,7 @@
 'use client'
 
 import Lottie from 'lottie-react'
-import { useEffect, useState } from 'react'
+import useSWR from 'swr'
 
 interface LottieAnimationProps {
   animationData?: object
@@ -13,6 +13,15 @@ interface LottieAnimationProps {
   className?: string
 }
 
+// Fetcher for Lottie JSON files
+const lottieFetcher = async (url: string): Promise<object> => {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error('Failed to load Lottie animation')
+  }
+  return response.json()
+}
+
 export function LottieAnimation({
   animationData,
   path,
@@ -22,25 +31,32 @@ export function LottieAnimation({
   autoplay = true,
   className = '',
 }: LottieAnimationProps) {
-  const [data, setData] = useState<object | null>(animationData || null)
-
-  useEffect(() => {
-    if (path && !animationData) {
-      fetch(path)
-        .then((res) => res.json())
-        .then((json) => setData(json))
-        .catch((err) => console.error('Failed to load Lottie animation:', err))
+  // Use SWR to fetch animation data if path is provided
+  const { data, error } = useSWR<object>(
+    path && !animationData ? path : null,
+    lottieFetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
     }
-  }, [path, animationData])
+  )
 
-  if (!data) {
+  // Use provided animationData or fetched data
+  const animation = animationData || data
+
+  if (error) {
+    console.error('Failed to load Lottie animation:', error)
+    return null
+  }
+
+  if (!animation) {
     return null
   }
 
   return (
     <div className={className} style={{ width, height }}>
       <Lottie
-        animationData={data}
+        animationData={animation}
         loop={loop}
         autoplay={autoplay}
         style={{ width: '100%', height: '100%' }}
@@ -48,6 +64,3 @@ export function LottieAnimation({
     </div>
   )
 }
-
-
-

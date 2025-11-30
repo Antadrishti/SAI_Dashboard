@@ -8,7 +8,7 @@ import { apiClient, AnalyticsData } from '@/lib/api'
 import { StatCard } from '@/components/dashboard/StatCard'
 
 export default function DashboardPage() {
-  const { t } = useLanguage()
+  const { t, formatNumber, formatDate } = useLanguage()
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -28,6 +28,27 @@ export default function DashboardPage() {
     }
   }
 
+  // Helper to translate activity descriptions
+  const translateActivity = (description: string): string => {
+    // Parse the activity description
+    if (description.includes('test verified for')) {
+      const parts = description.split(' test verified for ')
+      const testType = parts[0]
+      const name = parts[1]
+      return `${t('activity.testVerified')} ${testType} - ${name}`
+    }
+    if (description.includes('video submitted by')) {
+      const parts = description.split('video submitted by ')
+      const name = parts[1]
+      return `${t('activity.videoSubmitted')} - ${name}`
+    }
+    if (description.includes('New athlete registered')) {
+      const name = description.replace('New athlete registered: ', '')
+      return `${t('activity.newAthlete')} - ${name}`
+    }
+    return description
+  }
+
   if (loading || !data) {
     return (
       <DashboardLayout>
@@ -43,7 +64,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-[#2B2F77]">{t('nav.dashboard')}</h1>
-          <p className="text-[#6B7280] mt-1">Welcome to Sports Aadhaar</p>
+          <p className="text-[#6B7280] mt-1">{t('dashboard.welcome')}</p>
         </div>
 
         {/* Stats Grid */}
@@ -57,7 +78,7 @@ export default function DashboardPage() {
             iconColor="orange"
           />
           <StatCard
-            title="Total Academies"
+            title={t('dashboard.totalAcademies')}
             value={8}
             trend="+2"
             trendPositive={true}
@@ -65,7 +86,7 @@ export default function DashboardPage() {
             iconColor="purple"
           />
           <StatCard
-            title="Total Test Submissions"
+            title={t('dashboard.totalTestSubmissions')}
             value={data.totalVideos}
             trend="+15%"
             trendPositive={true}
@@ -89,9 +110,9 @@ export default function DashboardPage() {
                   {activity.description.charAt(0)}
                 </div>
                 <div className="flex-1">
-                  <p className="text-[#2B2F77] font-medium">{activity.description}</p>
+                  <p className="text-[#2B2F77] font-medium">{translateActivity(activity.description)}</p>
                   <p className="text-sm text-[#9CA3AF] mt-1">
-                    {new Date(activity.timestamp).toLocaleString()}
+                    {formatDate(activity.timestamp)}
                   </p>
                 </div>
               </div>

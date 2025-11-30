@@ -6,8 +6,10 @@ import { AcademyCard } from '@/components/academy/AcademyCard'
 import { mockAcademies } from '@/lib/mockData/academies'
 import { useState } from 'react'
 import { Search } from 'lucide-react'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 export default function AcademiesPage() {
+    const { t, formatNumber } = useLanguage()
     const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
     const [stateFilter, setStateFilter] = useState<string>('all')
@@ -31,8 +33,8 @@ export default function AcademiesPage() {
     return (
         <DashboardLayout>
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-[#2B2F77] mb-2">Academy Management</h1>
-                <p className="text-gray-600">Monitor and manage academy activities</p>
+                <h1 className="text-3xl font-bold text-[#2B2F77] mb-2">{t('academies.title')}</h1>
+                <p className="text-gray-600">{t('academies.subtitle')}</p>
             </div>
 
             {/* Statistics */}
@@ -46,7 +48,7 @@ export default function AcademiesPage() {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                             type="text"
-                            placeholder="Search academies by name or location..."
+                            placeholder={t('academies.searchPlaceholder')}
                             value={searchQuery}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF8C42] focus:border-transparent"
@@ -61,7 +63,7 @@ export default function AcademiesPage() {
                     >
                         {uniqueStates.map((state) => (
                             <option key={state} value={state}>
-                                {state === 'all' ? 'All States' : state}
+                                {state === 'all' ? t('filter.allStates') : state}
                             </option>
                         ))}
                     </select>
@@ -72,14 +74,14 @@ export default function AcademiesPage() {
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF8C42] focus:border-transparent"
                     >
-                        <option value="all">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
+                        <option value="all">{t('filter.allStatus')}</option>
+                        <option value="active">{t('status.active')}</option>
+                        <option value="inactive">{t('status.inactive')}</option>
                     </select>
                 </div>
 
                 <div className="mt-4 text-sm text-gray-600">
-                    Showing {filteredAcademies.length} of {mockAcademies.length} academies
+                    {t('academies.showing')} {formatNumber(filteredAcademies.length)} {t('common.of')} {formatNumber(mockAcademies.length)} {t('academies.academiesLabel')}
                 </div>
             </div>
 
@@ -92,7 +94,7 @@ export default function AcademiesPage() {
                 </div>
             ) : (
                 <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-                    <p className="text-gray-500">No academies found matching your criteria</p>
+                    <p className="text-gray-500">{t('academies.noResults')}</p>
                 </div>
             )}
         </DashboardLayout>

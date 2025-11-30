@@ -26,9 +26,9 @@ export default function LoginPage() {
               />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Sports Aadhaar
+              {t('app.name')}
             </h1>
-            <p className="text-gray-600">Sports Authority of India</p>
+            <p className="text-gray-600">{t('app.authority')}</p>
           </div>
 
           <div className="space-y-6">
@@ -54,7 +54,7 @@ export default function LoginPage() {
                   fill="#EA4335"
                 />
               </svg>
-              Sign in with Google
+              {t('auth.signInWithGoogle')}
             </button>
           </div>
         </div>
@@ -62,4 +62,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

@@ -1,17 +1,26 @@
+'use client'
+
 import React from 'react'
 import { Card } from '../ui/Card'
 import { MapPin, Users, CheckCircle, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import type { Academy } from '@/lib/mockData/academies'
+import { useLanguage } from '@/components/providers/LanguageProvider'
 
 interface AcademyCardProps {
     academy: Academy
 }
 
 export function AcademyCard({ academy }: AcademyCardProps) {
+    const { t, formatNumber } = useLanguage()
+    
     const approvalRate = academy.athletesReviewed > 0
         ? Math.round((academy.athletesApproved / academy.athletesReviewed) * 100)
         : 0
+
+    const translateStatus = (status: string): string => {
+        return status === 'active' ? t('status.active') : t('status.inactive')
+    }
 
     return (
         <Link href={`/dashboard/academies/${academy.id}`}>
@@ -32,7 +41,7 @@ export function AcademyCard({ academy }: AcademyCardProps) {
                                     : 'bg-gray-100 text-gray-800'
                                 }`}
                         >
-                            {academy.status}
+                            {translateStatus(academy.status)}
                         </span>
                     </div>
 
@@ -41,31 +50,31 @@ export function AcademyCard({ academy }: AcademyCardProps) {
                         <div>
                             <div className="flex items-center text-gray-500 text-xs mb-1">
                                 <Users className="w-3 h-3 mr-1" />
-                                Reviewed
+                                {t('academies.reviewed')}
                             </div>
-                            <div className="text-2xl font-bold text-[#2B2F77]">{academy.athletesReviewed}</div>
+                            <div className="text-2xl font-bold text-[#2B2F77]">{formatNumber(academy.athletesReviewed)}</div>
                         </div>
                         <div>
                             <div className="flex items-center text-green-600 text-xs mb-1">
                                 <CheckCircle className="w-3 h-3 mr-1" />
-                                Approved
+                                {t('academies.approved')}
                             </div>
-                            <div className="text-2xl font-bold text-green-600">{academy.athletesApproved}</div>
+                            <div className="text-2xl font-bold text-green-600">{formatNumber(academy.athletesApproved)}</div>
                         </div>
                         <div>
                             <div className="flex items-center text-red-600 text-xs mb-1">
                                 <XCircle className="w-3 h-3 mr-1" />
-                                Rejected
+                                {t('academies.rejected')}
                             </div>
-                            <div className="text-2xl font-bold text-red-600">{academy.athletesRejected}</div>
+                            <div className="text-2xl font-bold text-red-600">{formatNumber(academy.athletesRejected)}</div>
                         </div>
                     </div>
 
                     {/* Approval Rate */}
                     <div className="mt-auto">
                         <div className="flex items-center justify-between text-sm mb-2">
-                            <span className="text-gray-600">Approval Rate</span>
-                            <span className="font-semibold text-[#2B2F77]">{approvalRate}%</span>
+                            <span className="text-gray-600">{t('academies.approvalRate')}</span>
+                            <span className="font-semibold text-[#2B2F77]">{formatNumber(approvalRate)}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
@@ -77,7 +86,7 @@ export function AcademyCard({ academy }: AcademyCardProps) {
 
                     {/* Contact Person */}
                     <div className="mt-4 pt-4 border-t border-gray-100">
-                        <p className="text-xs text-gray-500">Contact Person</p>
+                        <p className="text-xs text-gray-500">{t('academies.contactPerson')}</p>
                         <p className="text-sm font-medium text-gray-900">{academy.contactPerson}</p>
                     </div>
                 </div>

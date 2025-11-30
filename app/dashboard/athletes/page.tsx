@@ -2,37 +2,33 @@
 
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { useLanguage } from '@/components/providers/LanguageProvider'
-import { useEffect, useState } from 'react'
-import { apiClient, Athlete } from '@/lib/api'
+import { useState } from 'react'
+import { Athlete, apiEndpoints, fetcher } from '@/lib/api'
 import { Search, Filter, Eye, User, X } from 'lucide-react'
+import useSWR from 'swr'
 
 export default function AthletesPage() {
-  const { t } = useLanguage()
-  const [athletes, setAthletes] = useState<Athlete[]>([])
-  const [loading, setLoading] = useState(true)
+  const { t, formatNumber } = useLanguage()
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState('all')
   const [selectedAthlete, setSelectedAthlete] = useState<Athlete | null>(null)
 
-  useEffect(() => {
-    loadAthletes()
-  }, [searchQuery, filter])
-
-  const loadAthletes = async () => {
-    setLoading(true)
-    try {
-      const result = await apiClient.getAthletes({
-        search: searchQuery || undefined,
-        filter: filter !== 'all' ? filter : undefined,
-        limit: 50,
-      })
-      setAthletes(result.athletes)
-    } catch (error) {
-      console.error('Failed to load athletes:', error)
-    } finally {
-      setLoading(false)
+  // Use SWR for data fetching
+  const { data, error, isLoading } = useSWR<{ athletes: Athlete[]; total: number }>(
+    apiEndpoints.athletes({
+      search: searchQuery || undefined,
+      filter: filter !== 'all' ? filter : undefined,
+      limit: 50,
+    }),
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
     }
-  }
+  )
+
+  const athletes = data?.athletes || []
+  const loading = isLoading
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -40,14 +36,28 @@ export default function AthletesPage() {
       pending: 'bg-yellow-100 text-yellow-800',
       verified: 'bg-blue-100 text-blue-800',
     }
+    const statusTranslations: Record<string, string> = {
+      active: t('status.active'),
+      pending: t('status.pending'),
+      verified: t('status.verified'),
+    }
     return (
       <span
         className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-800'
           }`}
       >
-        {status}
+        {statusTranslations[status] || status}
       </span>
     )
+  }
+
+  const translateGender = (gender: string): string => {
+    const genders: Record<string, string> = {
+      male: t('gender.male'),
+      female: t('gender.female'),
+      other: t('gender.other'),
+    }
+    return genders[gender.toLowerCase()] || gender
   }
 
   return (
@@ -55,7 +65,7 @@ export default function AthletesPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">{t('athletes.title')}</h1>
-          <p className="text-gray-600 mt-1">Browse and manage athlete profiles</p>
+          <p className="text-gray-600 mt-1">{t('athletes.subtitle')}</p>
         </div>
 
         {/* Search and Filter */}
@@ -78,8 +88,10 @@ export default function AthletesPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
             <div className="p-12 text-center text-gray-500">{t('common.loading')}</div>
+          ) : error ? (
+            <div className="p-12 text-center text-red-500">{t('error.loadFailed')}</div>
           ) : athletes.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No athletes found</div>
+            <div className="p-12 text-center text-gray-500">{t('athletes.noResults')}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -120,17 +132,17 @@ export default function AthletesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {athlete.age}
+                        {formatNumber(athlete.age)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                        {athlete.gender}
+                        {translateGender(athlete.gender)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{athlete.location}</div>
                         <div className="text-sm text-gray-500">{athlete.state}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {athlete.testsCompleted}
+                        {formatNumber(athlete.testsCompleted)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
@@ -162,7 +174,7 @@ export default function AthletesPage() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">Athlete Details</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">{t('athletes.details')}</h2>
                   <button
                     onClick={() => setSelectedAthlete(null)}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -183,24 +195,24 @@ export default function AthletesPage() {
 
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Age</label>
-                      <p className="text-lg text-gray-900">{selectedAthlete.age} years</p>
+                      <label className="text-sm font-medium text-gray-500">{t('athletes.age')}</label>
+                      <p className="text-lg text-gray-900">{formatNumber(selectedAthlete.age)} {t('common.years')}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Gender</label>
-                      <p className="text-lg text-gray-900 capitalize">{selectedAthlete.gender}</p>
+                      <label className="text-sm font-medium text-gray-500">{t('athletes.gender')}</label>
+                      <p className="text-lg text-gray-900 capitalize">{translateGender(selectedAthlete.gender)}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Location</label>
+                      <label className="text-sm font-medium text-gray-500">{t('athletes.location')}</label>
                       <p className="text-lg text-gray-900">{selectedAthlete.location}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">State</label>
+                      <label className="text-sm font-medium text-gray-500">{t('athletes.state')}</label>
                       <p className="text-lg text-gray-900">{selectedAthlete.state}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Tests Completed</label>
-                      <p className="text-lg text-gray-900">{selectedAthlete.testsCompleted}</p>
+                      <label className="text-sm font-medium text-gray-500">{t('athletes.testsCompleted')}</label>
+                      <p className="text-lg text-gray-900">{formatNumber(selectedAthlete.testsCompleted)}</p>
                     </div>
                   </div>
 
@@ -209,7 +221,7 @@ export default function AthletesPage() {
                       onClick={() => setSelectedAthlete(null)}
                       className="w-full bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 transition-colors"
                     >
-                      Close
+                      {t('common.close')}
                     </button>
                   </div>
                 </div>
@@ -221,4 +233,3 @@ export default function AthletesPage() {
     </DashboardLayout>
   )
 }
-
